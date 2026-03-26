@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weibo Crawler 互动课程</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400;1,9..40,500&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-bg: #FAF7F2;
+      --color-bg-warm: #F5F0E8;
+      --color-bg-code: #1E1E2E;
+      --color-text: #2C2A28;
+      --color-text-secondary: #6B6560;
+      --color-text-muted: #9E9790;
+      --color-border: #E5DFD6;
+      --color-border-light: #EEEBE5;
+      --color-surface: #FFFFFF;
+      --color-surface-warm: #FDF9F3;
+      --color-accent: #D94F30;
+      --color-accent-hover: #C4432A;
+      --color-accent-light: #FDEEE9;
+      --color-accent-muted: #E8836C;
+      --color-success: #2D8B55;
+      --color-success-light: #E8F5EE;
+      --color-error: #C93B3B;
+      --color-error-light: #FDE8E8;
+      --color-info: #2A7B9B;
+      --color-info-light: #E4F2F7;
+      --color-actor-1: #D94F30;
+      --color-actor-2: #2A7B9B;
+      --color-actor-3: #7B6DAA;
+      --color-actor-4: #D4A843;
+      --color-actor-5: #2D8B55;
+      --font-display: 'Bricolage Grotesque', Georgia, serif;
+      --font-body: 'DM Sans', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+      --text-xs: 0.75rem;
+      --text-sm: 0.875rem;
+      --text-base: 1rem;
+      --text-lg: 1.125rem;
+      --text-xl: 1.25rem;
+      --text-2xl: 1.5rem;
+      --text-3xl: 1.875rem;
+      --text-4xl: 2.25rem;
+      --text-5xl: 3rem;
+      --text-6xl: 3.75rem;
+      --leading-tight: 1.15;
+      --leading-snug: 1.3;
+      --leading-normal: 1.6;
+      --leading-loose: 1.8;
+      --space-1: 0.25rem;
+      --space-2: 0.5rem;
+      --space-3: 0.75rem;
+      --space-4: 1rem;
+      --space-5: 1.25rem;
+      --space-6: 1.5rem;
+      --space-8: 2rem;
+      --space-10: 2.5rem;
+      --space-12: 3rem;
+      --space-16: 4rem;
+      --space-20: 5rem;
+      --space-24: 6rem;
+      --content-width: 800px;
+      --content-width-wide: 1000px;
+      --nav-height: 56px;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-full: 9999px;
+      --shadow-sm: 0 1px 2px rgba(44, 42, 40, 0.05);
+      --shadow-md: 0 4px 12px rgba(44, 42, 40, 0.08);
+      --shadow-lg: 0 8px 24px rgba(44, 42, 40, 0.1);
+      --shadow-xl: 0 16px 48px rgba(44, 42, 40, 0.12);
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+      --duration-fast: 150ms;
+      --duration-normal: 300ms;
+      --duration-slow: 500ms;
+      --stagger-delay: 120ms;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font-body);
+      color: var(--color-text);
+      background: var(--color-bg);
+      background-image: radial-gradient(ellipse at 20% 50%, rgba(217, 79, 48, 0.03) 0%, transparent 50%);
+      scroll-behavior: smooth;
+    }
+    html { scroll-snap-type: y proximity; }
+    a { color: var(--color-accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    nav.nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--nav-height);
+      background: rgba(250, 247, 242, 0.92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--color-border);
+      z-index: 1000;
+    }
+    .progress-bar {
+      position: absolute;
+      top: 0; left: 0; height: 4px;
+      background: var(--color-accent);
+      width: 0;
+      transition: width var(--duration-normal) var(--ease-out);
+    }
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 100%;
+      padding: 0 var(--space-6);
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .nav-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: var(--text-lg);
+      letter-spacing: 0.02em;
+    }
+    .nav-dots {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+    .nav-dot {
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      border: 2px solid var(--color-text-muted);
+      background: transparent;
+      cursor: pointer;
+      padding: 0;
+      transition: all var(--duration-normal) var(--ease-out);
+    }
+    .nav-dot.active {
+      border-color: var(--color-accent);
+      background: var(--color-accent);
+      box-shadow: 0 0 0 4px rgba(217, 79, 48, 0.18);
+    }
+    .nav-dot.visited { background: var(--color-accent); border-color: var(--color-accent); }
+
+    .module {
+      min-height: 100vh;
+      scroll-snap-align: start;
+      padding: calc(var(--nav-height) + var(--space-12)) var(--space-6) var(--space-16);
+    }
+    .module-content {
+      max-width: var(--content-width-wide);
+      margin: 0 auto;
+    }
+    .module-header { margin-bottom: var(--space-10); }
+    .module-number {
+      display: inline-block;
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: var(--text-6xl);
+      color: rgba(217, 79, 48, 0.18);
+      letter-spacing: 0.08em;
+    }
+    .module-title {
+      margin: var(--space-2) 0 var(--space-2);
+      font-size: var(--text-4xl);
+      font-family: var(--font-display);
+      line-height: var(--leading-tight);
+    }
+    .module-subtitle {
+      margin: 0;
+      color: var(--color-text-secondary);
+      font-size: var(--text-lg);
+      max-width: 720px;
+      line-height: var(--leading-normal);
+    }
+    .module-body {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-12);
+    }
+    .screen {
+      background: var(--color-surface);
+      border-radius: var(--radius-lg);
+      padding: var(--space-8);
+      box-shadow: var(--shadow-md);
+    }
+    .screen-heading {
+      margin: 0 0 var(--space-3);
+      font-size: var(--text-2xl);
+      font-family: var(--font-display);
+    }
+    .lead {
+      font-size: var(--text-lg);
+      color: var(--color-text-secondary);
+      line-height: var(--leading-normal);
+    }
+    .animate-in {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity var(--duration-slow) var(--ease-out), transform var(--duration-slow) var(--ease-out);
+    }
+    .animate-in.visible { opacity: 1; transform: translateY(0); }
+    .stagger-children > .animate-in { transition-delay: calc(var(--stagger-index, 0) * var(--stagger-delay)); }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: var(--space-8);
+      align-items: center;
+    }
+    .hero-card {
+      background: var(--color-surface-warm);
+      padding: var(--space-6);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+    }
+    .hero-list { list-style: none; padding: 0; margin: var(--space-4) 0 0; display: grid; gap: var(--space-3); }
+    .hero-list li {
+      display: flex;
+      gap: var(--space-3);
+      align-items: center;
+      font-size: var(--text-base);
+      color: var(--color-text-secondary);
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      background: var(--color-accent-light);
+      color: var(--color-accent);
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-full);
+      font-weight: 600;
+      font-size: var(--text-sm);
+    }
+
+    .step-cards { display: flex; flex-direction: column; gap: var(--space-3); }
+    .step-card {
+      display: flex; gap: var(--space-4);
+      padding: var(--space-4) var(--space-5);
+      background: var(--color-surface);
+      border-radius: var(--radius-md);
+      border-left: 3px solid var(--color-accent);
+      box-shadow: var(--shadow-sm);
+    }
+    .step-num {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--color-accent);
+      color: #fff;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+    }
+    .step-body p { margin: var(--space-1) 0 0; color: var(--color-text-secondary); }
+
+    .translation-block {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+      margin: var(--space-6) 0;
+    }
+    .translation-code {
+      background: var(--color-bg-code);
+      color: #CDD6F4;
+      padding: var(--space-6);
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+      line-height: 1.7;
+      position: relative;
+      overflow-x: hidden;
+    }
+    .translation-english {
+      background: var(--color-surface-warm);
+      padding: var(--space-6);
+      font-size: var(--text-sm);
+      line-height: 1.7;
+      border-left: 3px solid var(--color-accent);
+      position: relative;
+    }
+    .translation-label {
+      position: absolute;
+      top: var(--space-2);
+      right: var(--space-3);
+      font-size: var(--text-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      opacity: 0.5;
+    }
+    pre, code {
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-x: hidden;
+    }
+    .code-line { display: block; }
+    .code-keyword { color: #CBA6F7; }
+    .code-string { color: #A6E3A1; }
+    .code-property { color: #F9E2AF; }
+    .code-function { color: #89B4FA; }
+    .code-comment { color: #6C7086; }
+    .code-number { color: #FAB387; }
+
+    .pattern-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: var(--space-4);
+    }
+    .pattern-card {
+      background: var(--color-surface);
+      padding: var(--space-6);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      transition: transform var(--duration-normal) var(--ease-out), box-shadow var(--duration-normal);
+    }
+    .pattern-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+    .pattern-icon {
+      width: 48px; height: 48px;
+      border-radius: var(--radius-full);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      color: #fff;
+      margin-bottom: var(--space-3);
+      box-shadow: var(--shadow-sm);
+    }
+    .pattern-title { margin: 0 0 var(--space-2); font-size: var(--text-lg); }
+    .pattern-desc { margin: 0; color: var(--color-text-secondary); }
+
+    .callout {
+      display: flex;
+      gap: var(--space-3);
+      padding: var(--space-4) var(--space-5);
+      border-radius: var(--radius-md);
+      border-left: 3px solid var(--color-accent);
+      background: var(--color-accent-light);
+      color: var(--color-text);
+    }
+    .callout-icon { font-size: 1.5rem; }
+    .callout-title { display: block; margin-bottom: var(--space-1); }
+
+    .quiz-container { margin-top: var(--space-5); display: flex; flex-direction: column; gap: var(--space-3); }
+    .quiz-question-block { background: var(--color-surface-warm); padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); }
+    .quiz-question { margin: 0 0 var(--space-3); font-size: var(--text-lg); }
+    .quiz-options { display: flex; flex-direction: column; gap: var(--space-3); }
+    .quiz-option {
+      display: flex; align-items: center; gap: var(--space-3);
+      padding: var(--space-3) var(--space-4);
+      border: 2px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      background: var(--color-surface);
+      cursor: pointer;
+      transition: border-color var(--duration-fast), background var(--duration-fast);
+      width: 100%;
+      text-align: left;
+    }
+    .quiz-option:hover { border-color: var(--color-accent-muted); }
+    .quiz-option.selected { border-color: var(--color-accent); background: var(--color-accent-light); }
+    .quiz-option.correct { border-color: var(--color-success); background: var(--color-success-light); }
+    .quiz-option.incorrect { border-color: var(--color-error); background: var(--color-error-light); }
+    .quiz-option-radio {
+      width: 18px; height: 18px; border-radius: 50%;
+      border: 2px solid var(--color-border);
+      transition: all var(--duration-fast);
+      flex-shrink: 0;
+    }
+    .quiz-option.selected .quiz-option-radio {
+      border-color: var(--color-accent);
+      background: var(--color-accent);
+      box-shadow: inset 0 0 0 3px #fff;
+    }
+    .quiz-feedback {
+      max-height: 0; overflow: hidden; opacity: 0;
+      transition: max-height var(--duration-normal), opacity var(--duration-normal);
+      margin-top: var(--space-2);
+    }
+    .quiz-feedback.show { max-height: 200px; opacity: 1; padding: var(--space-3); border-radius: var(--radius-sm); }
+    .quiz-feedback.success { background: var(--color-success-light); color: var(--color-success); }
+    .quiz-feedback.error { background: var(--color-error-light); color: var(--color-error); }
+    .quiz-controls { display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; }
+    .quiz-check-btn, .quiz-reset-btn, .flow-btn, .chat-btn {
+      padding: var(--space-3) var(--space-5);
+      border-radius: var(--radius-full);
+      border: none;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--color-accent);
+      color: #fff;
+      box-shadow: var(--shadow-sm);
+      transition: transform var(--duration-fast), box-shadow var(--duration-fast);
+    }
+    .quiz-reset-btn { background: var(--color-text-secondary); }
+    .quiz-check-btn:hover, .quiz-reset-btn:hover, .flow-btn:hover, .chat-btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+    .term {
+      border-bottom: 1.5px dashed var(--color-accent-muted);
+      cursor: pointer;
+      position: relative;
+    }
+    .term:hover, .term.active { border-bottom-color: var(--color-accent); color: var(--color-accent); }
+    .term-tooltip {
+      position: fixed;
+      background: var(--color-bg-code);
+      color: #CDD6F4;
+      padding: var(--space-3) var(--space-4);
+      border-radius: var(--radius-sm);
+      font-size: var(--text-sm);
+      line-height: var(--leading-normal);
+      width: max(220px, min(320px, 80vw));
+      box-shadow: var(--shadow-lg);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity var(--duration-fast);
+      z-index: 10000;
+    }
+    .term-tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: var(--color-bg-code);
+    }
+    .term-tooltip.visible { opacity: 1; }
+    .term-tooltip.flip { bottom: auto; top: calc(100% + 8px); }
+    .term-tooltip.flip::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: var(--color-bg-code); }
+
+    .file-tree { font-family: var(--font-mono); font-size: var(--text-sm); }
+    .ft-folder, .ft-file { padding: var(--space-2) var(--space-3); border-left: 2px solid var(--color-border-light); margin-left: var(--space-4); }
+    .ft-folder > .ft-name { color: var(--color-accent); font-weight: 600; }
+    .ft-folder > .ft-name::before { content: '📁 '; }
+    .ft-file > .ft-name::before { content: '📄 '; }
+    .ft-desc { color: var(--color-text-secondary); font-family: var(--font-body); margin-left: var(--space-2); font-size: var(--text-xs); }
+    .ft-children { margin-left: var(--space-4); }
+
+    .chat-window {
+      background: var(--color-surface);
+      border-radius: var(--radius-lg);
+      padding: var(--space-5);
+      box-shadow: var(--shadow-md);
+    }
+    .chat-messages { display: flex; flex-direction: column; gap: var(--space-3); }
+    .chat-message { display: none; gap: var(--space-3); align-items: flex-start; }
+    .chat-avatar {
+      width: 40px; height: 40px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-weight: 700; font-family: var(--font-display);
+    }
+    .chat-bubble {
+      background: var(--color-surface-warm);
+      padding: var(--space-3) var(--space-4);
+      border-radius: 14px;
+      box-shadow: var(--shadow-sm);
+    }
+    .chat-sender { font-weight: 700; display: block; margin-bottom: var(--space-1); }
+    .chat-typing { display: none; align-items: center; gap: var(--space-3); margin-top: var(--space-2); }
+    .chat-typing-dots { display: flex; gap: 4px; }
+    .typing-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-text-muted); animation: typingBounce 1.4s infinite; }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingBounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+    @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .chat-controls { display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; margin-top: var(--space-3); }
+    .chat-progress { color: var(--color-text-secondary); font-size: var(--text-sm); }
+
+    .flow-animation {
+      background: var(--color-surface);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6);
+      box-shadow: var(--shadow-md);
+      position: relative;
+      overflow: hidden;
+    }
+    .flow-actors { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); }
+    .flow-actor {
+      background: var(--color-surface-warm);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      box-shadow: var(--shadow-sm);
+      text-align: center;
+      transition: transform var(--duration-normal) var(--ease-out), box-shadow var(--duration-normal);
+      position: relative;
+    }
+    .flow-actor.active { box-shadow: 0 0 0 3px var(--color-accent), 0 0 20px rgba(217,79,48,0.2); transform: scale(1.03); }
+    .flow-actor-icon { width: 48px; height: 48px; border-radius: var(--radius-full); margin: 0 auto var(--space-2); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; }
+    .flow-packet {
+      position: absolute;
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: var(--color-accent);
+      box-shadow: var(--shadow-md);
+      transform: translate(-50%, -50%);
+      opacity: 0;
+      transition: transform var(--duration-slow) var(--ease-out), opacity var(--duration-fast);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: var(--text-xs);
+    }
+    .flow-label { margin-top: var(--space-4); font-weight: 600; color: var(--color-text-secondary); }
+    .flow-controls { margin-top: var(--space-3); display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; }
+    .flow-progress { color: var(--color-text-muted); font-size: var(--text-sm); }
+
+    .icon-rows { display: flex; flex-direction: column; gap: var(--space-4); }
+    .icon-row {
+      display: flex; gap: var(--space-4); align-items: center;
+      padding: var(--space-4);
+      background: var(--color-surface);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+    }
+    .icon-circle {
+      width: 48px; height: 48px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.25rem; flex-shrink: 0;
+    }
+    .arch-diagram {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: var(--space-4);
+      margin-top: var(--space-4);
+    }
+    .arch-zone {
+      background: var(--color-surface);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      box-shadow: var(--shadow-sm);
+    }
+    .arch-zone-label { margin: 0 0 var(--space-3); color: var(--color-text-secondary); }
+    .arch-component {
+      display: flex; gap: var(--space-3); align-items: center;
+      padding: var(--space-3);
+      border: 1px dashed var(--color-border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: border-color var(--duration-fast), background var(--duration-fast);
+    }
+    .arch-component:hover { border-color: var(--color-accent); background: var(--color-accent-light); }
+    .arch-icon { font-size: 1.3rem; }
+    .arch-description { grid-column: 1/-1; padding: var(--space-4); background: var(--color-surface-warm); border-radius: var(--radius-md); border-left: 3px solid var(--color-accent); }
+
+    .badge-list { display: flex; flex-direction: column; gap: var(--space-3); }
+    .badge-item {
+      display: flex; align-items: center; gap: var(--space-4);
+      padding: var(--space-3) var(--space-4);
+      border: 1px solid var(--color-border-light);
+      border-radius: var(--radius-sm);
+      background: var(--color-surface);
+      transition: border-color var(--duration-fast);
+    }
+    .badge-item:hover { border-color: var(--color-accent-muted); }
+    .badge-code {
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+      background: var(--color-bg-code);
+      color: #CBA6F7;
+      padding: var(--space-1) var(--space-3);
+      border-radius: var(--radius-sm);
+      white-space: nowrap;
+    }
+
+    .footnote { margin-top: var(--space-4); color: var(--color-text-secondary); font-size: var(--text-sm); }
+
+    @media (max-width: 900px) {
+      .hero { grid-template-columns: 1fr; }
+      .translation-block { grid-template-columns: 1fr; }
+      .translation-english { border-left: none; border-top: 3px solid var(--color-accent); }
+      .flow-actors { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+    }
+    @media (max-width: 600px) {
+      :root { --text-4xl: 1.875rem; --text-5xl: 2.25rem; --text-6xl: 3rem; }
+      .module { padding: calc(var(--nav-height) + var(--space-8)) var(--space-4) var(--space-10); }
+      .screen { padding: var(--space-6); }
+      .icon-row { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav" aria-label="课程导航">
+    <div class="progress-bar" role="progressbar" aria-valuenow="0"></div>
+    <div class="nav-inner">
+      <span class="nav-title">Weibo Crawler · 互动课程</span>
+      <div class="nav-dots" aria-label="模块导航">
+        <button class="nav-dot active" data-target="module-1" aria-label="模块1"></button>
+        <button class="nav-dot" data-target="module-2" aria-label="模块2"></button>
+        <button class="nav-dot" data-target="module-3" aria-label="模块3"></button>
+        <button class="nav-dot" data-target="module-4" aria-label="模块4"></button>
+        <button class="nav-dot" data-target="module-5" aria-label="模块5"></button>
+        <button class="nav-dot" data-target="module-6" aria-label="模块6"></button>
+      </div>
+    </div>
+  </nav>
+
+  <section class="module" id="module-1" style="background: var(--color-bg);">
+    <div class="module-content">
+      <header class="module-header animate-in">
+        <span class="module-number">01</span>
+        <h1 class="module-title">这门课讲什么？</h1>
+        <p class="module-subtitle">站在“用户跑一轮爬虫”的视角，理解 Weibo Crawler 做了什么、为什么这样做，以及你能如何掌舵。</p>
+      </header>
+      <div class="module-body">
+        <div class="screen animate-in">
+          <div class="hero">
+            <div>
+              <h2 class="screen-heading">想象场景：把一个博主的全部动态拎出来</h2>
+              <p class="lead">把 <span class="term" data-definition="用于描述目标微博用户的数字ID，例如 1669879400">user_id</span> 填进 <code>config.json</code>，运行爬虫，几分钟后得到 CSV/JSON/数据库记录、原图/视频，甚至可选的情感分析与摘要。</p>
+              <ul class="hero-list">
+                <li><span class="pill">👀 输入</span> 配置里的目标用户列表、下载偏好与 Cookie</li>
+                <li><span class="pill">🚚 过程</span> 逐页抓取 → 反爬节奏控制 → 解析字段 → 可选 LLM 分析</li>
+                <li><span class="pill">📦 输出</span> CSV / JSON / SQLite / MySQL / MongoDB 及本地媒体文件</li>
+              </ul>
+            </div>
+            <div class="hero-card">
+              <strong>一轮完整旅程</strong>
+              <div class="step-cards">
+                <div class="step-card">
+                  <div class="step-num">1</div>
+                  <div class="step-body">
+                    <strong>准备</strong>
+                    <p>修改 <code>config.json</code> 或调用 API <code>/refresh</code> 指定 user_id_list。</p>
+                  </div>
+                </div>
+                <div class="step-card">
+                  <div class="step-num">2</div>
+                  <div class="step-body">
+                    <strong>奔跑</strong>
+                    <p>会话预热、动态延迟、逐页请求 m.weibo.cn，解析正文、互动数、媒体 URL。</p>
+                  </div>
+                </div>
+                <div class="step-card">
+                  <div class="step-num">3</div>
+                  <div class="step-body">
+                    <strong>落地</strong>
+                    <p>写入 CSV/JSON/数据库，按需下载图片/视频，选配 LLM 生成摘要与情感。</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">代码 ↔ 中文解说：定时运行入口</h2>
+          <p class="lead">入口文件 <code>__main__.py</code> 负责把爬虫任务挂到定时调度上，防止忘记更新数据。</p>
+          <div class="translation-block">
+            <div class="translation-code">
+<span class="translation-label">CODE</span>
+<pre><code>
+<span class="code-line"><span class="code-keyword">def</span> main(schedule_interval):</span>
+<span class="code-line">    schedule.<span class="code-function">every</span>(schedule_interval).minutes.do(weibo.main)</span>
+<span class="code-line">    weibo.logger.info(<span class="code-string">'循环间隔设置为%d分钟'</span>, schedule_interval)</span>
+<span class="code-line"></span>
+<span class="code-line">    weibo.<span class="code-function">main</span>()</span>
+<span class="code-line">    <span class="code-keyword">while</span> True:</span>
+<span class="code-line">        <span class="code-keyword">try</span>:</span>
+<span class="code-line">            schedule.<span class="code-function">run_pending</span>()</span>
+<span class="code-line">            sleep(<span class="code-number">1</span>)</span>
+<span class="code-line">        <span class="code-keyword">except</span> KeyboardInterrupt:</span>
+<span class="code-line">            schedule.<span class="code-function">cancel_job</span>(weibo.main)</span>
+<span class="code-line">            <span class="code-keyword">break</span></span>
+</code></pre>
+            </div>
+            <div class="translation-english">
+<span class="translation-label">PLAIN ENGLISH</span>
+<div class="translation-lines">
+  <p class="tl">把爬虫主函数挂到“每 N 分钟执行一次”的定时器上。</p>
+  <p class="tl">先立即跑一遍，保证你立刻看到结果，不用等下一轮。</p>
+  <p class="tl">主循环里每秒检查是否到了执行时间，轻量但持续。</p>
+  <p class="tl">Ctrl+C 会优雅退出，避免残留任务。</p>
+</div>
+            </div>
+          </div>
+
+          <div class="quiz-container" id="quiz-1">
+            <div class="quiz-question-block" data-question="q1-1" data-correct="b">
+              <h3 class="quiz-question">如果想改成“每 10 分钟抓一次”，应该动哪里？</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="a" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div><span>修改 <code>sleep(1)</code> 为 <code>sleep(600)</code></span>
+                </button>
+                <button class="quiz-option" data-value="b" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div><span>启动时传入 <code>schedule_interval=10</code> 或改命令行参数</span>
+                </button>
+                <button class="quiz-option" data-value="c" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div><span>把 <code>run_pending()</code> 换成 <code>run_all()</code></span>
+                </button>
+              </div>
+              <div class="quiz-feedback" id="q1-1-feedback"></div>
+            </div>
+            <div class="quiz-controls">
+              <button class="quiz-check-btn" onclick="checkQuiz('quiz-1')">提交答案</button>
+              <button class="quiz-reset-btn" onclick="resetQuiz('quiz-1')">再试一次</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="module" id="module-2" style="background: var(--color-bg-warm);">
+    <div class="module-content">
+      <header class="module-header animate-in">
+        <span class="module-number">02</span>
+        <h1 class="module-title">认识“演员阵容”</h1>
+        <p class="module-subtitle">把仓库想成剧组：Weibo 爬虫是导演，Flask API 是助理导演，LLM 分析器是影评人，存储层是影像库。</p>
+      </header>
+      <div class="module-body">
+        <div class="screen animate-in">
+          <h2 class="screen-heading">文件树速览</h2>
+          <p class="lead">用可视化文件树替代长段文字，快速知道“谁负责什么”。</p>
+          <div class="file-tree">
+            <div class="ft-folder open">
+              <span class="ft-name">weibo.py</span><span class="ft-desc">核心导演：会话、分页、解析、写入、反爬</span>
+              <div class="ft-children">
+                <div class="ft-file"><span class="ft-name">Weibo.start()</span><span class="ft-desc"> orchestrate：初始化→循环抓取→写文件</span></div>
+                <div class="ft-file"><span class="ft-name">calculate_dynamic_delay</span><span class="ft-desc">反爬节奏控制</span></div>
+              </div>
+            </div>
+            <div class="ft-folder"><span class="ft-name">service.py</span><span class="ft-desc">Flask API，线程池串行刷新，查询 SQLite</span></div>
+            <div class="ft-folder"><span class="ft-name">util/llm_analyzer.py</span><span class="ft-desc">把文本交给外部 LLM，做情感/摘要/异常检测</span></div>
+            <div class="ft-folder"><span class="ft-name">__main__.py</span><span class="ft-desc">定时调度入口</span></div>
+            <div class="ft-folder"><span class="ft-name">config.json</span><span class="ft-desc">抓取范围、写入模式、下载偏好、llm_config</span></div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">组内群聊：一次抓取谁说了什么？</h2>
+          <p class="lead">把组件拟人化，看看它们如何“发消息协作”。</p>
+          <div class="chat-window">
+            <div class="chat-messages" id="chat-messages">
+              <div class="chat-message" data-sender="actor-a" style="display:none">
+                <div class="chat-avatar" style="background: var(--color-actor-1)">CLI</div>
+                <div class="chat-bubble">
+                  <span class="chat-sender" style="color: var(--color-actor-1)">命令行 / API 调度</span>
+                  <p>收到 user_id_list 和写入模式，启动一轮刷新。</p>
+                </div>
+              </div>
+              <div class="chat-message" data-sender="actor-b" style="display:none">
+                <div class="chat-avatar" style="background: var(--color-actor-2)">WB</div>
+                <div class="chat-bubble">
+                  <span class="chat-sender" style="color: var(--color-actor-2)">Weibo 爬虫</span>
+                  <p>会话预热 OK，按反爬节奏去 m.weibo.cn 拉微博列表。</p>
+                </div>
+              </div>
+              <div class="chat-message" data-sender="actor-c" style="display:none">
+                <div class="chat-avatar" style="background: var(--color-actor-3)">API</div>
+                <div class="chat-bubble">
+                  <span class="chat-sender" style="color: var(--color-actor-3)">m.weibo.cn</span>
+                  <p>返回 JSON，附带正文、互动数、媒体 URL。</p>
+                </div>
+              </div>
+              <div class="chat-message" data-sender="actor-d" style="display:none">
+                <div class="chat-avatar" style="background: var(--color-actor-4)">LLM</div>
+                <div class="chat-bubble">
+                  <span class="chat-sender" style="color: var(--color-actor-4)">LLM 分析器</span>
+                  <p>需要我吗？我可以给每条微博做摘要和情感标签。</p>
+                </div>
+              </div>
+              <div class="chat-message" data-sender="actor-e" style="display:none">
+                <div class="chat-avatar" style="background: var(--color-actor-5)">DB</div>
+                <div class="chat-bubble">
+                  <span class="chat-sender" style="color: var(--color-actor-5)">存储层</span>
+                  <p>收到清洗好的记录，写入 CSV/JSON/SQLite，同时保存原图/视频。</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="chat-typing" id="chat-typing">
+              <div class="chat-avatar" id="typing-avatar">?</div>
+              <div class="chat-typing-dots">
+                <span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>
+              </div>
+            </div>
+
+            <div class="chat-controls">
+              <button class="chat-btn" onclick="playChatNext()">下一条</button>
+              <button class="chat-btn" onclick="playChatAll()">自动播放</button>
+              <button class="quiz-reset-btn" onclick="resetChat()">重播</button>
+              <span class="chat-progress" id="chat-progress">0 / 5</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">代码 ↔ 中文解说：API 触发刷新</h2>
+          <p class="lead">Flask 路由 <code>/refresh</code> 把请求放进线程池，确保串行且可追踪状态。</p>
+          <div class="translation-block">
+            <div class="translation-code">
+<span class="translation-label">CODE</span>
+<pre><code>
+<span class="code-line"><span class="code-keyword">def</span> run_refresh_task(task_id, user_id_list=None):</span>
+<span class="code-line">    <span class="code-keyword">global</span> current_task_id</span>
+<span class="code-line">    <span class="code-keyword">try</span>:</span>
+<span class="code-line">        tasks[task_id][<span class="code-string">'state'</span>] = <span class="code-string">'PROGRESS'</span></span>
+<span class="code-line">        tasks[task_id][<span class="code-string">'progress'</span>] = <span class="code-number">0</span></span>
+<span class="code-line"></span>
+<span class="code-line">        config = get_config(user_id_list)</span>
+<span class="code-line">        wb = Weibo(config)</span>
+<span class="code-line">        tasks[task_id][<span class="code-string">'progress'</span>] = <span class="code-number">50</span></span>
+<span class="code-line"></span>
+<span class="code-line">        wb.start()</span>
+<span class="code-line">        tasks[task_id][<span class="code-string">'progress'</span>] = <span class="code-number">100</span></span>
+<span class="code-line">        tasks[task_id][<span class="code-string">'state'</span>] = <span class="code-string">'SUCCESS'</span></span>
+</code></pre>
+            </div>
+            <div class="translation-english">
+<span class="translation-label">PLAIN ENGLISH</span>
+<div class="translation-lines">
+  <p class="tl">每个刷新请求分配一个 task_id 记录状态。</p>
+  <p class="tl">先复制配置并允许临时覆盖 user_id_list。</p>
+  <p class="tl">初始化 Weibo 爬虫后进度直接到 50%，表明启动成功。</p>
+  <p class="tl">抓取完成写回 100% 与 SUCCESS，API 即可返回结果。</p>
+</div>
+            </div>
+          </div>
+
+          <div class="quiz-container" id="quiz-2">
+            <div class="quiz-question-block" data-question="q2-1" data-correct="c">
+              <h3 class="quiz-question">为什么线程池 <code>max_workers=1</code>？</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>因为 Python 不支持多线程</span></button>
+                <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>为了让日志更好看</span></button>
+                <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>避免同时多用户触发导致账号被封，保持串行可控</span></button>
+              </div>
+              <div class="quiz-feedback" id="q2-1-feedback"></div>
+            </div>
+            <div class="quiz-controls">
+              <button class="quiz-check-btn" onclick="checkQuiz('quiz-2')">提交答案</button>
+              <button class="quiz-reset-btn" onclick="resetQuiz('quiz-2')">再试一次</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="module" id="module-3" style="background: var(--color-bg);">
+    <div class="module-content">
+      <header class="module-header animate-in">
+        <span class="module-number">03</span>
+        <h1 class="module-title">一条请求的旅程：防封与节奏</h1>
+        <p class="module-subtitle">从用户配置到 m.weibo.cn，再到解析落盘，看看数据包如何穿梭，以及如何“踩刹车”。</p>
+      </header>
+      <div class="module-body">
+        <div class="screen animate-in">
+          <h2 class="screen-heading">数据流动画</h2>
+          <p class="lead">点击“下一步”，跟着数据包从配置、到会话、到微博 API、再到存储。</p>
+          <div class="flow-animation">
+            <div class="flow-actors">
+              <div class="flow-actor" id="flow-actor-config">
+                <div class="flow-actor-icon" style="background: var(--color-actor-1)">CFG</div>
+                <strong>Config</strong>
+                <p class="lead">user_id_list、写入模式、Cookie</p>
+              </div>
+              <div class="flow-actor" id="flow-actor-session">
+                <div class="flow-actor-icon" style="background: var(--color-actor-2)">SES</div>
+                <strong>Session</strong>
+                <p class="lead">Headers、重试、动态延迟</p>
+              </div>
+              <div class="flow-actor" id="flow-actor-api">
+                <div class="flow-actor-icon" style="background: var(--color-actor-3)">API</div>
+                <strong>m.weibo.cn</strong>
+                <p class="lead">返回 JSON 列表</p>
+              </div>
+              <div class="flow-actor" id="flow-actor-storage">
+                <div class="flow-actor-icon" style="background: var(--color-actor-4)">IO</div>
+                <strong>Storage</strong>
+                <p class="lead">CSV/JSON/DB + 媒体</p>
+              </div>
+            </div>
+            <div class="flow-packet" id="flow-packet">🧭</div>
+            <div class="flow-label" id="flow-label">点击“下一步”开始</div>
+            <div class="flow-controls">
+              <button class="flow-btn" onclick="flowNext()">下一步</button>
+              <button class="quiz-reset-btn" onclick="flowReset()">重置</button>
+              <span class="flow-progress" id="flow-progress">Step 0 / 5</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">代码 ↔ 中文解说：动态延迟</h2>
+          <p class="lead">反爬的关键：根据请求次数和时间动态调整等待，避免把 IP 烧红。</p>
+          <div class="translation-block">
+            <div class="translation-code">
+<span class="translation-label">CODE</span>
+<pre><code>
+<span class="code-line"><span class="code-keyword">def</span> calculate_dynamic_delay(self):</span>
+<span class="code-line">    <span class="code-keyword">if</span> <span class="code-keyword">not</span> self.anti_ban_enabled:</span>
+<span class="code-line">        <span class="code-keyword">return</span> <span class="code-number">0</span></span>
+<span class="code-line"></span>
+<span class="code-line">    config = self.anti_ban_config</span>
+<span class="code-line">    base_delay = config.get(<span class="code-string">"request_delay_min"</span>, <span class="code-number">8</span>)</span>
+<span class="code-line"></span>
+<span class="code-line">    request_count = self.crawl_stats[<span class="code-string">"request_count"</span>]</span>
+<span class="code-line">    <span class="code-keyword">if</span> request_count > <span class="code-number">100</span>:</span>
+<span class="code-line">        base_delay += <span class="code-number">5</span></span>
+<span class="code-line">    <span class="code-keyword">if</span> request_count > <span class="code-number">300</span>:</span>
+<span class="code-line">        base_delay += <span class="code-number">10</span></span>
+<span class="code-line"></span>
+<span class="code-line">    <span class="code-keyword">if</span> self.crawl_stats[<span class="code-string">"start_time"</span>]:</span>
+<span class="code-line">        time_elapsed = time.time() - self.crawl_stats[<span class="code-string">"start_time"</span>]</span>
+<span class="code-line">        <span class="code-keyword">if</span> time_elapsed > <span class="code-number">300</span>:</span>
+<span class="code-line">            base_delay += <span class="code-number">5</span></span>
+</code></pre>
+            </div>
+            <div class="translation-english">
+<span class="translation-label">PLAIN ENGLISH</span>
+<div class="translation-lines">
+  <p class="tl">先检查是否开启反爬，如果没有就零等待。</p>
+  <p class="tl">基础延迟来自配置，可在 config.json 配置 anti_ban。</p>
+  <p class="tl">请求越多越慢：超过 100 次 +5s，超过 300 次再 +10s。</p>
+  <p class="tl">跑得越久越慢：超过 5 分钟再叠加 5s，像长跑换成慢跑。</p>
+</div>
+            </div>
+          </div>
+
+          <div class="callout">
+            <div class="callout-icon">💡</div>
+            <div>
+              <strong class="callout-title">调节思路</strong>
+              <p>反爬策略像“逛街”：人少时快走，人多时放慢。让节奏跟踪请求次数与总时长，是防止 429 的低成本方案。</p>
+            </div>
+          </div>
+
+          <div class="quiz-container" id="quiz-3">
+            <div class="quiz-question-block" data-question="q3-1" data-correct="a">
+              <h3 class="quiz-question">如果你发现 30 分钟后依然被限流，第一步会调整什么？</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>降低 <code>request_delay_min</code> 的默认值？不，应该提高它或增加上限</span></button>
+                <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>把 <code>anti_ban_enabled</code> 关掉</span></button>
+                <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>去掉 session 预热</span></button>
+              </div>
+              <div class="quiz-feedback" id="q3-1-feedback"></div>
+            </div>
+            <div class="quiz-controls">
+              <button class="quiz-check-btn" onclick="checkQuiz('quiz-3')">提交答案</button>
+              <button class="quiz-reset-btn" onclick="resetQuiz('quiz-3')">再试一次</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="module" id="module-4" style="background: var(--color-bg-warm);">
+    <div class="module-content">
+      <header class="module-header animate-in">
+        <span class="module-number">04</span>
+        <h1 class="module-title">解析、清洗、再加点“智能”</h1>
+        <p class="module-subtitle">微博 JSON 只是起点：字段清洗、媒体下载、再用 LLM 做摘要与情感标记，让数据变好用。</p>
+      </header>
+      <div class="module-body">
+        <div class="screen animate-in">
+          <h2 class="screen-heading">LLM 分析器在做什么？</h2>
+          <p class="lead">可选能力：情感分析、摘要、异常检测。完全由配置 <code>llm_config</code> 决定是否启用。</p>
+          <div class="translation-block">
+            <div class="translation-code">
+<span class="translation-label">CODE</span>
+<pre><code>
+<span class="code-line"><span class="code-keyword">def</span> _call_llm_api(self, prompt: <span class="code-property">str</span>) -> Optional[<span class="code-property">str</span>]:</span>
+<span class="code-line">    <span class="code-keyword">try</span>:</span>
+<span class="code-line">        headers = {</span>
+<span class="code-line">            <span class="code-string">"Authorization"</span>: <span class="code-string">f"Bearer {self.api_key}"</span>,</span>
+<span class="code-line">            <span class="code-string">"Content-Type"</span>: <span class="code-string">"application/json"</span></span>
+<span class="code-line">        }</span>
+<span class="code-line">        data = {</span>
+<span class="code-line">            <span class="code-string">"model"</span>: self.model,</span>
+<span class="code-line">            <span class="code-string">"messages"</span>: [{<span class="code-string">"role"</span>: <span class="code-string">"user"</span>, <span class="code-string">"content"</span>: prompt}],</span>
+<span class="code-line">            <span class="code-string">"max_tokens"</span>: self.config.get(<span class="code-string">'max_tokens'</span>, <span class="code-number">1000</span>),</span>
+<span class="code-line">            <span class="code-string">"temperature"</span>: self.config.get(<span class="code-string">'temperature'</span>, <span class="code-number">0.7</span>)</span>
+<span class="code-line">        }</span>
+<span class="code-line">        response = requests.post(</span>
+<span class="code-line">            <span class="code-string">f"{self.api_base}/chat/completions"</span>,</span>
+<span class="code-line">            headers=headers,</span>
+<span class="code-line">            json=data,</span>
+<span class="code-line">            timeout=self.config.get(<span class="code-string">'timeout'</span>, <span class="code-number">30</span>)</span>
+<span class="code-line">        )</span>
+<span class="code-line"></span>
+<span class="code-line">        <span class="code-keyword">if</span> response.status_code == <span class="code-number">200</span>:</span>
+<span class="code-line">            <span class="code-keyword">return</span> response.json()[<span class="code-string">'choices'</span>][<span class="code-number">0</span>][<span class="code-string">'message'</span>][<span class="code-string">'content'</span>]</span>
+</code></pre>
+            </div>
+            <div class="translation-english">
+<span class="translation-label">PLAIN ENGLISH</span>
+<div class="translation-lines">
+  <p class="tl">按 OpenAI 风格构造请求：模型、messages、温度、超时。</p>
+  <p class="tl">把 API key 放在 Bearer 头里，确保走 HTTPS。</p>
+  <p class="tl">成功返回就取第一条回复，失败会记录日志而不是抛出。</p>
+  <p class="tl">所有开关都来自 <code>llm_config</code>，不想用就关掉。</p>
+</div>
+            </div>
+          </div>
+
+          <div class="pattern-cards">
+            <div class="pattern-card" style="border-top:3px solid var(--color-actor-4)">
+              <div class="pattern-icon" style="background: var(--color-actor-4)">📝</div>
+              <h4 class="pattern-title">摘要</h4>
+              <p class="pattern-desc">为长微博生成 50 字以内摘要，方便在表格中快速扫读。</p>
+            </div>
+            <div class="pattern-card" style="border-top:3px solid var(--color-actor-5)">
+              <div class="pattern-icon" style="background: var(--color-actor-5)">🙂</div>
+              <h4 class="pattern-title">情感</h4>
+              <p class="pattern-desc">返回 积极/中性/消极，帮助做舆情分段或筛选。</p>
+            </div>
+            <div class="pattern-card" style="border-top:3px solid var(--color-actor-2)">
+              <div class="pattern-icon" style="background: var(--color-actor-2)">🚨</div>
+              <h4 class="pattern-title">异常检测</h4>
+              <p class="pattern-desc">快速标记广告/谣言/敏感内容，人工再复核。</p>
+            </div>
+          </div>
+
+          <div class="quiz-container" id="quiz-4">
+            <div class="quiz-question-block" data-question="q4-1" data-correct="b">
+              <h3 class="quiz-question">想关闭 LLM 分析但保留抓取，最小改动是什么？</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>把代码里 <code>LLMAnalyzer</code> 相关行删掉</span></button>
+                <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>在 <code>config.json</code> 去掉 <code>llm_config</code> 或设置开关为 false</span></button>
+                <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>禁用 SQLite 输出</span></button>
+              </div>
+              <div class="quiz-feedback" id="q4-1-feedback"></div>
+            </div>
+            <div class="quiz-controls">
+              <button class="quiz-check-btn" onclick="checkQuiz('quiz-4')">提交答案</button>
+              <button class="quiz-reset-btn" onclick="resetQuiz('quiz-4')">再试一次</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="module" id="module-5" style="background: var(--color-bg);">
+    <div class="module-content">
+      <header class="module-header animate-in">
+        <span class="module-number">05</span>
+        <h1 class="module-title">落盘、服务化与可视化</h1>
+        <p class="module-subtitle">抓取结束只是开始：如何写入多种格式，如何通过 API 交付数据。</p>
+      </header>
+      <div class="module-body">
+        <div class="screen animate-in">
+          <h2 class="screen-heading">架构图：单机抓取 + 轻量 API</h2>
+          <p class="lead">点击组件查看作用，脑中形成“我该改哪一层”。</p>
+          <div class="arch-diagram">
+            <div class="arch-zone">
+              <h4 class="arch-zone-label">调度 & CLI</h4>
+              <div class="arch-component" onclick="showArchDesc(this)" data-desc="通过命令行或 __main__.py 定时任务启动抓取。">
+                <div class="arch-icon">⌚</div><span>Scheduler</span>
+              </div>
+              <div class="arch-component" onclick="showArchDesc(this)" data-desc="单次运行 weibo.main()，串联爬取/写入。">
+                <div class="arch-icon">💻</div><span>CLI Runner</span>
+              </div>
+            </div>
+            <div class="arch-zone">
+              <h4 class="arch-zone-label">采集核心</h4>
+              <div class="arch-component" onclick="showArchDesc(this)" data-desc="Weibo 类：请求、解析、反爬、媒体下载、写出。">
+                <div class="arch-icon">🧠</div><span>Weibo</span>
+              </div>
+              <div class="arch-component" onclick="showArchDesc(this)" data-desc="LLMAnalyzer：摘要/情感/异常，完全可选。">
+                <div class="arch-icon">✨</div><span>LLM Analyzer</span>
+              </div>
+            </div>
+            <div class="arch-zone">
+              <h4 class="arch-zone-label">输出 & 服务</h4>
+              <div class="arch-component" onclick="showArchDesc(this)" data-desc="CSV/JSON/SQLite/MySQL/MongoDB，多出口冗余。">
+                <div class="arch-icon">💾</div><span>Writers</span>
+              </div>
+              <div class="arch-component" onclick="showArchDesc(this)" data-desc="Flask API：/refresh 串行抓取；/weibos 查询 SQLite。">
+                <div class="arch-icon">🌐</div><span>Flask API</span>
+              </div>
+            </div>
+            <div class="arch-description" id="arch-desc">点击组件查看作用</div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">代码 ↔ 中文解说：SQLite 查询</h2>
+          <p class="lead">用最简单的方式把爬到的数据返回给前端或自动化脚本。</p>
+          <div class="translation-block">
+            <div class="translation-code">
+<span class="translation-label">CODE</span>
+<pre><code>
+<span class="code-line">@app.route(<span class="code-string">'/weibos'</span>, methods=[<span class="code-string">'GET'</span>])</span>
+<span class="code-line"><span class="code-keyword">def</span> get_weibos():</span>
+<span class="code-line">    <span class="code-keyword">try</span>:</span>
+<span class="code-line">        conn = sqlite3.connect(DATABASE_PATH)</span>
+<span class="code-line">        cursor = conn.cursor()</span>
+<span class="code-line">        cursor.execute(<span class="code-string">"SELECT * FROM weibo ORDER BY created_at DESC"</span>)</span>
+<span class="code-line">        columns = [column[<span class="code-number">0</span>] <span class="code-keyword">for</span> column <span class="code-keyword">in</span> cursor.description]</span>
+<span class="code-line">        weibos = []</span>
+<span class="code-line">        <span class="code-keyword">for</span> row <span class="code-keyword">in</span> cursor.fetchall():</span>
+<span class="code-line">            weibo = dict(zip(columns, row))</span>
+<span class="code-line">            weibos.append(weibo)</span>
+</code></pre>
+            </div>
+            <div class="translation-english">
+<span class="translation-label">PLAIN ENGLISH</span>
+<div class="translation-lines">
+  <p class="tl">REST 路由直接打开 SQLite，按时间倒序取全部记录。</p>
+  <p class="tl">列名来自 cursor.description，再 zip 成 dict，避免硬编码字段。</p>
+  <p class="tl">简单返回 JSON，供面板或自动化脚本消费。</p>
+  <p class="tl">想分页/过滤？在这里加 WHERE / LIMIT 即可。</p>
+</div>
+            </div>
+          </div>
+
+          <div class="badge-list">
+            <div class="badge-item">
+              <code class="badge-code">write_mode</code>
+              <span class="badge-desc">["csv", "json", "mongo", "mysql", "sqlite"] 可组合输出，文件落在 <code>weibo/</code></span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">user_id_as_folder_name</code>
+              <span class="badge-desc">0 用昵称作目录，1 用 user_id，方便批量脚本处理</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">download_comment / repost</code>
+              <span class="badge-desc">控制是否抓评论/转发，并限制最大数量</span>
+            </div>
+          </div>
+
+          <div class="quiz-container" id="quiz-5">
+            <div class="quiz-question-block" data-question="q5-1" data-correct="c">
+              <h3 class="quiz-question">前端想看最新 200 条微博，最轻改法？</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>把全部数据放到内存后再切片</span></button>
+                <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>在前端自行分页</span></button>
+                <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>在 SQL 里加 <code>LIMIT 200</code> 或 OFFSET，后端直接返回想要的窗口</span></button>
+              </div>
+              <div class="quiz-feedback" id="q5-1-feedback"></div>
+            </div>
+            <div class="quiz-controls">
+              <button class="quiz-check-btn" onclick="checkQuiz('quiz-5')">提交答案</button>
+              <button class="quiz-reset-btn" onclick="resetQuiz('quiz-5')">再试一次</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="module" id="module-6" style="background: var(--color-bg-warm);">
+    <div class="module-content">
+      <header class="module-header animate-in">
+        <span class="module-number">06</span>
+        <h1 class="module-title">故障排查 & 升级路线</h1>
+        <p class="module-subtitle">跑不动、被限流、要支持更多用户？这里给出实战指引。</p>
+      </header>
+      <div class="module-body">
+        <div class="screen animate-in">
+          <h2 class="screen-heading">常见症状 → 行动</h2>
+          <div class="icon-rows">
+            <div class="icon-row">
+              <div class="icon-circle" style="background: var(--color-actor-1)">⚠️</div>
+              <div>
+                <strong>返回 418/429</strong>
+                <p>提高 <code>request_delay_min/max</code>，开启 <span class="term" data-definition="控制请求频率的反爬参数集合，位于 config.json 里">anti_ban</span>，缩减 user_id 数量。</p>
+              </div>
+            </div>
+            <div class="icon-row">
+              <div class="icon-circle" style="background: var(--color-actor-2)">💤</div>
+              <div>
+                <strong>任务卡住</strong>
+                <p>检查线程池是否有未完成任务，查看 <code>log/weibo.log</code>；必要时重启 Flask。</p>
+              </div>
+            </div>
+            <div class="icon-row">
+              <div class="icon-circle" style="background: var(--color-actor-3)">🧠</div>
+              <div>
+                <strong>LLM 超时或计费压力</strong>
+                <p>调低 <code>max_tokens</code> / <code>temperature</code>，或在 config 里暂时关闭相关开关。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">小练习：你会怎么做？</h2>
+          <p class="lead">用情景题锻炼“该改哪里”。</p>
+          <div class="quiz-container" id="quiz-6">
+            <div class="quiz-question-block" data-question="q6-1" data-correct="a">
+              <h3 class="quiz-question">想把媒体下载目录改成 SSD 分区，最佳切入点？</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>修改 <code>config.json</code> 里的 <code>output_directory</code>，无需动代码</span></button>
+                <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>在 weibo.py 里硬编码新路径</span></button>
+                <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>在 Flask API 里追加 querystring</span></button>
+              </div>
+              <div class="quiz-feedback" id="q6-1-feedback"></div>
+            </div>
+            <div class="quiz-question-block" data-question="q6-2" data-correct="b">
+              <h3 class="quiz-question">如果想并行抓多个大 V，但又怕封禁，第一步？</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>把线程池调到 10</span></button>
+                <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>保持单线程，但拆分 user_id_list，分批轮换 + 加大延迟</span></button>
+                <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>关闭 anti_ban 配置</span></button>
+              </div>
+              <div class="quiz-feedback" id="q6-2-feedback"></div>
+            </div>
+            <div class="quiz-controls">
+              <button class="quiz-check-btn" onclick="checkQuiz('quiz-6')">提交答案</button>
+              <button class="quiz-reset-btn" onclick="resetQuiz('quiz-6')">再试一次</button>
+            </div>
+          </div>
+          <p class="footnote">复盘：任何改动都应该回到配置和节奏控制，尽量少改核心代码。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    (function() {
+      const dots = document.querySelectorAll('.nav-dot');
+      const progressBar = document.querySelector('.progress-bar');
+      const modules = Array.from(document.querySelectorAll('.module'));
+
+      function updateProgress() {
+        const scrollTop = window.scrollY;
+        const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const progress = (scrollHeight === 0) ? 0 : (scrollTop / scrollHeight) * 100;
+        progressBar.style.width = progress + '%';
+      }
+
+      function updateActiveDot() {
+        const viewportCenter = window.scrollY + window.innerHeight / 2;
+        let activeIndex = 0;
+        modules.forEach((mod, idx) => {
+          const rect = mod.getBoundingClientRect();
+          const modCenter = rect.top + window.scrollY + rect.height / 2;
+          if (modCenter <= viewportCenter) activeIndex = idx;
+        });
+        dots.forEach((dot, idx) => {
+          dot.classList.toggle('active', idx === activeIndex);
+          if (idx <= activeIndex) dot.classList.add('visited');
+        });
+      }
+
+      dots.forEach(dot => {
+        dot.addEventListener('click', () => {
+          const target = document.getElementById(dot.dataset.target);
+          target?.scrollIntoView({ behavior: 'smooth' });
+        });
+      });
+
+      window.addEventListener('scroll', () => {
+        requestAnimationFrame(() => {
+          updateProgress();
+          updateActiveDot();
+        });
+      }, { passive: true });
+
+      document.addEventListener('keydown', (e) => {
+        if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+        const active = Array.from(dots).findIndex(d => d.classList.contains('active'));
+        if ((e.key === 'ArrowDown' || e.key === 'ArrowRight') && active < dots.length - 1) {
+          document.getElementById(dots[active + 1].dataset.target)?.scrollIntoView({ behavior: 'smooth' });
+        }
+        if ((e.key === 'ArrowUp' || e.key === 'ArrowLeft') && active > 0) {
+          document.getElementById(dots[active - 1].dataset.target)?.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+
+      document.querySelectorAll('.stagger-children').forEach(parent => {
+        Array.from(parent.children).forEach((child, i) => {
+          child.style.setProperty('--stagger-index', i);
+        });
+      });
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { rootMargin: '0px 0px -10% 0px', threshold: 0.1 });
+      document.querySelectorAll('.animate-in').forEach(el => observer.observe(el));
+
+      let activeTooltip = null;
+      function positionTooltip(term, tip) {
+        const rect = term.getBoundingClientRect();
+        document.body.appendChild(tip);
+        const tipWidth = tip.offsetWidth || 300;
+        let left = rect.left + rect.width / 2 - tipWidth / 2;
+        left = Math.max(8, Math.min(left, window.innerWidth - tipWidth - 8));
+        const tipHeight = tip.offsetHeight || 40;
+        if (rect.top - tipHeight - 8 < 0) {
+          tip.style.top = (rect.bottom + 8) + 'px';
+          tip.classList.add('flip');
+        } else {
+          tip.style.top = (rect.top - tipHeight - 8) + 'px';
+          tip.classList.remove('flip');
+        }
+        tip.style.left = left + 'px';
+      }
+
+      document.querySelectorAll('.term').forEach(term => {
+        const tip = document.createElement('span');
+        tip.className = 'term-tooltip';
+        tip.textContent = term.dataset.definition || '';
+
+        term.addEventListener('mouseenter', () => {
+          if (activeTooltip && activeTooltip !== tip) {
+            activeTooltip.classList.remove('visible');
+            activeTooltip.remove();
+          }
+          positionTooltip(term, tip);
+          requestAnimationFrame(() => tip.classList.add('visible'));
+          activeTooltip = tip;
+        });
+        term.addEventListener('mouseleave', () => {
+          tip.classList.remove('visible');
+          setTimeout(() => { if (!tip.classList.contains('visible')) tip.remove(); }, 150);
+          activeTooltip = null;
+        });
+        term.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (activeTooltip && activeTooltip !== tip) {
+            activeTooltip.classList.remove('visible');
+            activeTooltip.remove();
+          }
+          if (tip.classList.contains('visible')) {
+            tip.classList.remove('visible');
+            tip.remove();
+            activeTooltip = null;
+          } else {
+            positionTooltip(term, tip);
+            requestAnimationFrame(() => tip.classList.add('visible'));
+            activeTooltip = tip;
+          }
+        });
+      });
+      document.addEventListener('click', () => {
+        if (activeTooltip) {
+          activeTooltip.classList.remove('visible');
+          activeTooltip.remove();
+          activeTooltip = null;
+        }
+      });
+
+      window.selectOption = function(btn) {
+        const block = btn.closest('.quiz-question-block');
+        block.querySelectorAll('.quiz-option').forEach(o => o.classList.remove('selected'));
+        btn.classList.add('selected');
+      };
+
+      function explanation(block, isCorrect) {
+        const qid = block.dataset.question;
+        const map = {
+          'q1-1': { success: '入口参数决定频率，sleep 是循环节奏，不是调度间隔。', fail: '看看调度行 schedule.every(...).minutes.do(...) 才是频率。' },
+          'q2-1': { success: '串行抓取降低封禁风险，也避免 SQLite 写入冲突。', fail: '线程池并不是越多越好，爬虫受限于 API 防护。' },
+          'q3-1': { success: '先放慢脚步，再观察；关掉反爬只会更糟。', fail: '调慢延迟才是应对限流的常规做法。' },
+          'q4-1': { success: '配置开关足够，无需改代码。', fail: '删代码会破坏可选能力，配置里直接关闭更安全。' },
+          'q5-1': { success: '在 SQL 加 LIMIT/OFFSET，少量改动即可满足需求。', fail: '返回全量再分页会浪费带宽与内存。' },
+          'q6-1': { success: 'output_directory 就是媒体根目录，直接改配置即可。', fail: '硬编码会破坏可移植性。' },
+          'q6-2': { success: '分批串行 + 延迟，更符合反爬规则。', fail: '盲目并发会更快触发限制。' }
+        };
+        return isCorrect ? map[qid]?.success || '正确' : map[qid]?.fail || '再想想配置入口。';
+      }
+
+      window.checkQuiz = function(sectionId) {
+        const container = document.querySelector(`#${sectionId}`);
+        const questions = container.querySelectorAll('.quiz-question-block');
+        questions.forEach(q => {
+          const selected = q.querySelector('.quiz-option.selected');
+          const feedback = q.querySelector('.quiz-feedback');
+          const correct = q.dataset.correct;
+          if (!selected) {
+            feedback.textContent = '先选一个答案哦～';
+            feedback.className = 'quiz-feedback show error';
+            return;
+          }
+          const ok = selected.dataset.value === correct;
+          selected.classList.add(ok ? 'correct' : 'incorrect');
+          if (!ok) {
+            q.querySelector(`[data-value="${correct}"]`)?.classList.add('correct');
+          }
+          feedback.textContent = ok ? explanation(q, true) : explanation(q, false);
+          feedback.className = 'quiz-feedback show ' + (ok ? 'success' : 'error');
+          q.querySelectorAll('.quiz-option').forEach(o => o.disabled = true);
+        });
+      };
+
+      window.resetQuiz = function(sectionId) {
+        const container = document.querySelector(`#${sectionId}`);
+        container.querySelectorAll('.quiz-question-block').forEach(q => {
+          q.querySelectorAll('.quiz-option').forEach(o => {
+            o.classList.remove('selected', 'correct', 'incorrect');
+            o.disabled = false;
+          });
+          const fb = q.querySelector('.quiz-feedback');
+          fb.textContent = '';
+          fb.className = 'quiz-feedback';
+        });
+      };
+
+      const chatMessages = document.querySelectorAll('#chat-messages .chat-message');
+      const chatTyping = document.getElementById('chat-typing');
+      const typingAvatar = document.getElementById('typing-avatar');
+      const chatProgress = document.getElementById('chat-progress');
+      let chatIndex = 0;
+      const actors = {
+        'actor-a': { initials: 'CLI', color: 'var(--color-actor-1)' },
+        'actor-b': { initials: 'WB', color: 'var(--color-actor-2)' },
+        'actor-c': { initials: 'API', color: 'var(--color-actor-3)' },
+        'actor-d': { initials: 'LLM', color: 'var(--color-actor-4)' },
+        'actor-e': { initials: 'IO', color: 'var(--color-actor-5)' },
+      };
+      function updateChatProgress() {
+        chatProgress.textContent = `${chatIndex} / ${chatMessages.length}`;
+      }
+      window.playChatNext = function() {
+        if (chatIndex >= chatMessages.length) return;
+        const msg = chatMessages[chatIndex];
+        const sender = msg.dataset.sender;
+        typingAvatar.textContent = actors[sender].initials;
+        typingAvatar.style.background = actors[sender].color;
+        chatTyping.style.display = 'flex';
+        setTimeout(() => {
+          chatTyping.style.display = 'none';
+          msg.style.display = 'flex';
+          msg.style.animation = 'fadeSlideUp 0.3s var(--ease-out)';
+          chatIndex++;
+          updateChatProgress();
+        }, 700);
+      };
+      window.playChatAll = function() {
+        const interval = setInterval(() => {
+          if (chatIndex >= chatMessages.length) { clearInterval(interval); return; }
+          playChatNext();
+        }, 1000);
+      };
+      window.resetChat = function() {
+        chatMessages.forEach(m => m.style.display = 'none');
+        chatIndex = 0;
+        updateChatProgress();
+      };
+      updateChatProgress();
+
+      const flowSteps = [
+        { from: 'flow-actor-config', to: 'flow-actor-session', label: '读取 config.json，准备 user_id_list 与写出模式', highlight: 'flow-actor-config' },
+        { from: 'flow-actor-session', to: 'flow-actor-api', label: '会话预热，带着 SUB Cookie 请求 m.weibo.cn', highlight: 'flow-actor-session', packet: true },
+        { from: 'flow-actor-api', to: 'flow-actor-session', label: 'API 返回 JSON 列表，包含正文与媒体 URL', highlight: 'flow-actor-api', packet: true },
+        { from: 'flow-actor-session', to: 'flow-actor-storage', label: '解析字段、可选 LLM 分析，准备写盘', highlight: 'flow-actor-session', packet: true },
+        { from: 'flow-actor-storage', to: 'flow-actor-storage', label: '写入 CSV/JSON/数据库，同时下载图片/视频', highlight: 'flow-actor-storage' }
+      ];
+      let flowIndex = 0;
+      function actorCenter(id) {
+        const el = document.getElementById(id);
+        const rect = el.getBoundingClientRect();
+        return { x: rect.left + rect.width / 2 + window.scrollX, y: rect.top + rect.height / 2 + window.scrollY };
+      }
+      function animatePacket(fromId, toId) {
+        const packet = document.getElementById('flow-packet');
+        const from = actorCenter(fromId);
+        const to = actorCenter(toId);
+        packet.style.opacity = 1;
+        packet.style.transform = `translate(${from.x}px, ${from.y}px)`;
+        requestAnimationFrame(() => {
+          packet.style.transform = `translate(${to.x}px, ${to.y}px)`;
+        });
+      }
+      window.flowNext = function() {
+        if (flowIndex >= flowSteps.length) return;
+        const step = flowSteps[flowIndex];
+        document.querySelectorAll('.flow-actor').forEach(a => a.classList.remove('active'));
+        document.getElementById(step.highlight)?.classList.add('active');
+        document.getElementById('flow-label').textContent = step.label;
+        if (step.packet) animatePacket(step.from, step.to);
+        flowIndex++;
+        document.getElementById('flow-progress').textContent = `Step ${flowIndex} / ${flowSteps.length}`;
+      };
+      window.flowReset = function() {
+        flowIndex = 0;
+        document.getElementById('flow-label').textContent = '点击“下一步”开始';
+        document.getElementById('flow-packet').style.opacity = 0;
+        document.querySelectorAll('.flow-actor').forEach(a => a.classList.remove('active'));
+        document.getElementById('flow-progress').textContent = `Step 0 / ${flowSteps.length}`;
+      };
+      flowReset();
+
+      window.showArchDesc = function(el) {
+        const desc = document.getElementById('arch-desc');
+        desc.textContent = el.dataset.desc || '';
+      };
+    })();
+  </script>
+</body>
+</html>
